@@ -1,10 +1,7 @@
-from flask import Flask, render_template, request, redirect, send_from_directory
+from flask import Flask, render_template, request, send_from_directory
 import os
-import PyPDF2
 import re
 import pandas as pd
-import openpyxl
-from openpyxl.styles import Border, Side
 
 app = Flask(__name__)
 
@@ -13,243 +10,171 @@ app = Flask(__name__)
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        file = request.files["pdf_file"]
+        file = request.files["txt_file"]
         if file:
-            # Verificar si la carpeta 'uploads' existe, y si no, crearla
+
             if not os.path.exists("uploads"):
                 os.makedirs("uploads")
 
             file_path = os.path.join("uploads", file.filename)
             file.save(file_path)
+
             try:
-                # Aquí comienza tu código de procesamiento del PDF
-                with open(file_path, "rb") as pdf_file:
-                    reader = PyPDF2.PdfReader(pdf_file)
-                    texto = "".join(page.extract_text() + "\n" for page in reader.pages)
-                    texto = texto.splitlines()
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        lines = f.readlines()
+                except UnicodeDecodeError:
+                    with open(file_path, "r", encoding="latin-1") as f:
+                        lines = f.readlines()
 
-                capturar = False
-                movimientos = []
-                movimiento = {}
-                banco = texto[1]
+                # Limpiar caracteres de control y eliminar bloques entre "----" y "--"
+                cleaned_lines = []
+                movements = []
+                eliminar = False
+                eliminar_desde_totales = False
+                temp_movement = {}
 
-                for linea in texto:
-                    # print(linea)
-                    if "F.de Pago" in linea:
-                        # print(linea)
-                        capturar = False
-                        # Extraer fecha y nro de liquidación aca
-                        # Extraer número CBU (6 o 7 dígitos)
-                        cbu_match = re.search(
-                            r"\d{1,3}(\.\d{3})*,\d+\-?\s+(\d+)", linea
-                        )
-                        # print(cbu_match)
-                        nro_cbu = (
-                            cbu_match.group(1)
-                            if cbu_match
-                            else "No se encontró Número de Liquidación"
-                        )
+                for i, line in enumerate(lines[9:], start=2):
+                    # Si la línea contiene "TOTALES POR TASA", eliminar todo lo posterior
+                    if "TOTALES POR TASA" in line:
+                        eliminar_desde_totales = True
+                        continue  # Saltar esta línea (no la procesamos, solo marcamos la eliminación)
 
-                        # Extraer fecha de liquidación (DD/MM/AAAA)
-                        fecha_match = (
-                            re.search(
-                                r"(\d{2}/\d{2}/\d{4})", linea.split("Nro. Liq:")[1]
-                            )
-                            if "Liq:" in linea
-                            else None
-                        )
-                        if cbu_match:
-                            movimiento["Liquidacion"] = cbu_match.group(2) + ".00"
-                        else:
-                            print("No se encontró ninguna coincidencia.")
-                        fecha_liq = (
-                            fecha_match.group(1)
-                            if fecha_match
-                            else "No se encontró fecha"
-                        )
-                        # Captura la fecha después de "Nro. Liq:"
-                        movimiento["Fecha"] = fecha_liq
-                        if nro_cbu == "No se encontró Número de Liquidación":
+                    if eliminar_desde_totales:
+                        break  # Detener el procesamiento de líneas después de "TOTALES POR TASA"
 
-                            pass
-                        else:
-                            movimiento["Liquidacion"] = round(
-                                float(movimiento["Liquidacion"])
-                            )
-                            movimientos.append(movimiento.copy())
-                            # print(movimiento["Liquidacion"])
-                            movimiento = {}
+                    # Si la línea comienza con "----", marca el inicio del bloque a eliminar
+                    if line.startswith("----"):
+                        eliminar = True
+                        continue  # Saltar esta línea (ya no se procesa)
 
-                    if "VENTAS" in linea or "QR" in linea or "AJUSTE" in linea:
-                        capturar = True
+                    # Si la línea comienza con "--", marca el final del bloque a eliminar
+                    if line.startswith("--"):
+                        eliminar = False
+                        continue  # Saltar esta línea (ya no se procesa)
 
-                    if capturar:
-                        partes = linea.split("$")
+                    # Si no estamos dentro de un bloque a eliminar, limpiamos la línea
+                    if not eliminar:
+                        cleaned_line = re.sub(
+                            r"\x1b[^m]*m", "", line
+                        )  # Elimina secuencias ANSI
+                        cleaned_line = re.sub(
+                            r"[\x00-\x1F\x7F]", "", cleaned_line
+                        )  # Eliminación de caracteres de control ASCII
+                        cleaned_lines.append(
+                            cleaned_line
+                        )  # Guardar la línea limpia sin espacios extra
+
+                for index, cleaned_line in enumerate(cleaned_lines):
+                    if (
+                        "numero" in temp_movement
+                        and temp_movement["numero"] == cleaned_line[12:20]
+                    ):
+                        partes = re.split(r"\s{3,}", cleaned_line[70:])
                         if len(partes) < 2:
                             pass
                         else:
-                            # print(partes)
-                            if "-" in partes[1]:
-                                valor = partes[1].strip().replace("Fecha", "")
-                                valor = valor.replace("-", "")
-                                valor = valor.replace(".", "").replace(",", ".")
-                                if "/" in valor:
-                                    pass
-                                else:
-                                    valor = round(float(valor), 2) * -1
-                                    partes[1] = valor
-                            elif "Fecha" in partes[1]:
-                                valor = partes[1].strip().replace("Fecha", "")
-                                valor = valor.replace(".", "").replace(",", ".")
-                                valor = round(float(valor), 2)
-                                partes[1] = valor
+                            if partes[0] == "Tasa 21%":
+                                temp_movement[partes[0] + " Neto"] = partes[1]
+                                temp_movement[partes[0] + " IVA"] = partes[2]
+                            elif partes[0] == "T.10.5%":
+                                temp_movement[partes[0] + " Neto"] = partes[1]
+                                temp_movement[partes[0] + " IVA"] = partes[2]
+                            elif partes[0] == "Tasa 27%":
+                                temp_movement[partes[0] + " Neto"] = partes[1]
+                                temp_movement[partes[0] + " IVA"] = partes[2]
+                    else:
+                        if cleaned_line[0:2] == "  ":
+                            partes = re.split(r"\s{3,}", cleaned_line[70:])
+                            if len(partes) < 2:
+                                pass
                             else:
-                                if "F.de Pago" in linea:
-                                    pass
+                                if partes[0] == "Tasa 21%":
+                                    temp_movement[partes[0] + " Neto"] = partes[1]
+                                    temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "T.10.5%":
+                                    temp_movement[partes[0] + " Neto"] = partes[1]
+                                    temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "Tasa 27%":
+                                    temp_movement[partes[0] + " Neto"] = partes[1]
+                                    temp_movement[partes[0] + " IVA"] = partes[2]
                                 else:
-                                    valor = (
-                                        partes[1]
-                                        .replace(".", "")
-                                        .replace(",", ".")
-                                        .replace("Fecha", "")
-                                    )
-                                    valor = round(float(valor), 2)
-                                    partes[1] = valor
-                            movimiento[partes[0]] = partes[1]
-                            # print(movimiento)
+                                    temp_movement[partes[0]] = partes[1]
+                        else:
+                            partes = re.split(r"\s{3,}", cleaned_line[70:])
+                            movement = temp_movement.copy()
+                            movements.append(movement)
+                            temp_movement.clear()
+                            if len(partes) < 2:
+                                pass
+                            else:
+                                temp_movement = {
+                                    "Fecha": cleaned_line[0:2],
+                                    "Comprobante": cleaned_line[3:5],
+                                    "PV": cleaned_line[6:11],
+                                    "Nro": cleaned_line[12:20],
+                                    "Letra": cleaned_line[20:21],
+                                    "Razon Social": cleaned_line[22:44],
+                                    "Condicion": cleaned_line[45:49],
+                                    "CUIT": cleaned_line[50:63],
+                                    "Concepto": cleaned_line[64:67],
+                                    "Jurisdiccion": cleaned_line[68:69],
+                                }
+                                if partes[0] == "Tasa 21%":
+                                    temp_movement[partes[0] + " Neto"] = partes[1]
+                                    temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "T.10.5%":
+                                    temp_movement[partes[0] + " Neto"] = partes[1]
+                                    temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "Tasa 27%":
+                                    temp_movement[partes[0] + " Neto"] = partes[1]
+                                    temp_movement[partes[0] + " IVA"] = partes[2]
+                                else:
+                                    temp_movement[partes[0]] = partes[1]
+                                if (
+                                    index == len(cleaned_lines) - 1
+                                ):  # Verificar si es el último elemento
+                                    movements.append(temp_movement)
 
-                # print(movimientos)
-                # Crear un DataFrame con los datos
-                df_total = pd.DataFrame(movimientos)
+                if not movements[0]:
+                    movements.pop(0)
 
-                # Reemplazar valores NaN por 0
-                df_total = df_total.fillna(0)
+                # Crear el DataFrame
+                df = pd.DataFrame(movements)
+                # Reemplazar los valores NaN por 0
+                df = df.fillna(0)
 
-                # Identificar las columnas que comienzan con "QR"
-                columnas_qr = [col for col in df_total.columns if col.startswith("QR")]
+                # Reemplazar comas por puntos en las columnas numéricas (desde el índice 11 hasta el final)
+                df.iloc[:, 10:] = df.iloc[:, 10:].replace(",", ".", regex=True)
 
-                # Filtrar filas y columnas para la hoja "QR", solo si existen columnas "QR"
-                if columnas_qr:
-                    df_qr = df_total[df_total[columnas_qr].sum(axis=1) != 0][
-                        ["Fecha", "Liquidacion"] + columnas_qr
-                    ]
-                else:
-                    df_qr = (
-                        None  # Si no hay columnas "QR", no creamos el DataFrame "QR"
-                    )
-
-                # Identificar las columnas que contienen "AJUSTE"
-                columnas_ajuste = [col for col in df_total.columns if "AJUSTE" in col]
-
-                # Filtrar filas y columnas para la hoja "AJUSTE", solo si existen columnas "AJUSTE"
-                if columnas_ajuste:
-                    df_ajuste = df_total[df_total[columnas_ajuste].sum(axis=1) != 0][
-                        ["Fecha", "Liquidacion"] + columnas_ajuste
-                    ]
-                else:
-                    df_ajuste = None  # Si no hay columnas "AJUSTE", no creamos el DataFrame "AJUSTE"
-
-                # Filtrar el DataFrame "Movimientos" eliminando las columnas "QR" y "AJUSTE"
-                df_movimientos = df_total.drop(columns=columnas_qr + columnas_ajuste)
-
-                # Ordenar las columnas para que "IMPORTE NETO" esté antes de las columnas que comienzan con "VENTAS"
-                columnas_importe_neto = [
-                    col for col in df_movimientos.columns if "IMPORTE NETO" in col
-                ]
-                columnas_ventas = [
-                    col for col in df_movimientos.columns if col.startswith("VENTAS")
-                ]
-                columnas_restantes = [
-                    col
-                    for col in df_movimientos.columns
-                    if col
-                    not in columnas_importe_neto
-                    + columnas_ventas
-                    + ["Fecha", "Liquidacion"]
-                ]
-
-                nuevo_orden_columnas = (
-                    ["Fecha", "Liquidacion"]
-                    + columnas_restantes
-                    + columnas_importe_neto
-                    + columnas_ventas
+                # Convertir las columnas desde el índice 11 hasta el final a tipo numérico
+                df.iloc[:, 10:] = (
+                    df.iloc[:, 10:].apply(pd.to_numeric, errors="coerce").fillna(0)
                 )
 
-                df_movimientos = df_movimientos[nuevo_orden_columnas]
+                # Columnas no numéricas (las primeras 10 columnas)
+                non_numeric_cols = df.columns[:10]
 
-                # Obtener el directorio actual
-                directorio_actual = os.getcwd()
+                # Columnas numéricas (las restantes)
+                numeric_cols = df.columns[10:]
 
-                # Ruta del archivo Excel
-                archivo_salida = os.path.join(directorio_actual, "Liquidaciones.xlsx")
+                # Lista de columnas que deseas volver negativas
+                columnas_a_convertir = df.columns[10:]
 
-                # Guardar en un archivo Excel con múltiples hojas
-                with pd.ExcelWriter(archivo_salida, engine="openpyxl") as writer:
-                    # Guardar la hoja "Movimientos"
-                    df_movimientos.to_excel(
-                        writer, sheet_name="Movimientos", index=False
-                    )
+                # Aplicar la conversión a negativos si el tipo de comprobante es "NC"
+                df.loc[df["Comprobante"] == "NC", columnas_a_convertir] *= -1
 
-                    # Guardar la hoja "QR" solo si tiene datos, o agregar un texto si no hay
-                    if df_qr is not None:
-                        df_qr.to_excel(writer, sheet_name="QR", index=False)
-                    else:
-                        wb = writer.book
-                        ws_qr = wb.create_sheet("QR")
-                        ws_qr["A1"] = "No hubo liquidaciones con QR"
+                df["PV"] = pd.to_numeric(df["PV"])
+                df["Nro"] = pd.to_numeric(df["Nro"])
+                df["Concepto"] = pd.to_numeric(df["Concepto"])
 
-                    # Guardar la hoja "AJUSTE" solo si tiene datos, o agregar un texto si no hay
-                    if df_ajuste is not None:
-                        df_ajuste.to_excel(writer, sheet_name="AJUSTE", index=False)
-                    else:
-                        wb = writer.book
-                        ws_ajuste = wb.create_sheet("AJUSTE")
-                        ws_ajuste["A1"] = "No hubo liquidaciones con Ajuste"
+                # Guardar el DataFrame en un archivo Excel
+                excel_filename = "Movimientos_MENDEZ.xlsx"
+                df.to_excel(excel_filename, index=False)
 
-                # Abrir el archivo Excel con openpyxl para aplicar formato
-                wb = openpyxl.load_workbook(archivo_salida)
-
-                # Crear un objeto de estilo de borde fino
-                border = Border(
-                    left=Side(border_style="thin"),
-                    right=Side(border_style="thin"),
-                    top=Side(border_style="thin"),
-                    bottom=Side(border_style="thin"),
-                )
-
-                def formatear_hoja(ws, df, columnas_ignorar):
-                    for row in ws.iter_rows():
-                        for cell in row:
-                            if (
-                                cell.column_letter not in columnas_ignorar
-                            ):  # No aplicar formato en las columnas ignoradas
-                                if isinstance(cell.value, (int, float)):
-                                    cell.number_format = (
-                                        "0.00"  # Formato de 2 decimales
-                                    )
-                            cell.border = border
-
-                    # Agregar la fórmula de suma en la fila de totales si hay datos
-                    total_row = len(df) + 2
-                    for col_idx, column in enumerate(df.columns[2:], start=3):
-                        ws.cell(
-                            row=total_row,
-                            column=col_idx,
-                            value=f"=SUM({openpyxl.utils.get_column_letter(col_idx)}2:{openpyxl.utils.get_column_letter(col_idx)}{total_row-1})",
-                        )
-
-                # Formatear las hojas "Movimientos", "QR" y "AJUSTE"
-                formatear_hoja(wb["Movimientos"], df_movimientos, ["A", "B"])
-                if df_qr is not None:
-                    formatear_hoja(wb["QR"], df_qr, ["A", "B"])
-                if df_ajuste is not None:
-                    formatear_hoja(wb["AJUSTE"], df_ajuste, ["A", "B"])
-
-                # Guardar el archivo con el formato y totales aplicados
-                wb.save(archivo_salida)
-
+                # Enviar el archivo Excel generado
                 return send_from_directory(
-                    os.getcwd(), "Liquidaciones.xlsx", as_attachment=True
+                    os.getcwd(), excel_filename, as_attachment=True
                 )
 
             except Exception as e:
