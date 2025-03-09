@@ -21,6 +21,7 @@ def index():
 
             file_path = os.path.join("uploads", file.filename)
             file.save(file_path)
+
             try:
                 try:
                     with open(file_path, "r", encoding="utf-8") as f:
@@ -141,9 +142,6 @@ def index():
                 if not movements[0]:
                     movements.pop(0)
 
-                for i in movements:
-                    print(i)
-
                 # Crear el DataFrame
                 df = pd.DataFrame(movements)
                 # Reemplazar los valores NaN por 0
@@ -173,8 +171,13 @@ def index():
                 df["Nro"] = pd.to_numeric(df["Nro"])
                 df["Concepto"] = pd.to_numeric(df["Concepto"])
 
+                # Guardar el DataFrame en un archivo Excel
+                excel_filename = "Movimientos_MENDEZ.xlsx"
+                df.to_excel(excel_filename, index=False)
+
+                # Enviar el archivo Excel generado
                 return send_from_directory(
-                    os.getcwd(), "Movimientos MENDEZ.xlsx", as_attachment=True
+                    os.getcwd(), excel_filename, as_attachment=True
                 )
 
             except Exception as e:
@@ -184,6 +187,4 @@ def index():
 
 
 if __name__ == "__main__":
-    if not os.path.exists(app.config["UPLOAD_FOLDER"]):
-        os.makedirs(app.config["UPLOAD_FOLDER"])
-    app.run(debug=True, host="0.0.0.0", port=os.getenv("PORT", default=5000))
+    app.run(debug=True)
