@@ -100,6 +100,10 @@ def index():
                                     temp_movement[partes[0] + " IVA"] = partes[2]
                                 else:
                                     temp_movement[partes[0]] = partes[1]
+                            if (
+                                index == len(cleaned_lines) - 1
+                            ):  # Verificar si es el último elemento
+                                movements.append(temp_movement)
                         else:
                             partes = re.split(r"\s{3,}", cleaned_line[70:])
                             movement = temp_movement.copy()
