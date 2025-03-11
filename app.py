@@ -83,6 +83,12 @@ def index():
                             elif partes[0] == "Tasa 27%":
                                 temp_movement[partes[0] + " Neto"] = partes[1]
                                 temp_movement[partes[0] + " IVA"] = partes[2]
+                            elif partes[0] == "C.F.21%":
+                                temp_movement[partes[0] + " Neto"] = partes[1]
+                                temp_movement[partes[0] + " IVA"] = partes[2]
+                            elif partes[0] == "C.F.10.5%":
+                                temp_movement[partes[0] + " Neto"] = partes[1]
+                                temp_movement[partes[0] + " IVA"] = partes[2]
                     else:
                         if cleaned_line[0:2] == "  ":
                             partes = re.split(r"\s{3,}", cleaned_line[70:])
@@ -96,6 +102,12 @@ def index():
                                     temp_movement[partes[0] + " Neto"] = partes[1]
                                     temp_movement[partes[0] + " IVA"] = partes[2]
                                 elif partes[0] == "Tasa 27%":
+                                    temp_movement[partes[0] + " Neto"] = partes[1]
+                                    temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "C.F.21%":
+                                    temp_movement[partes[0] + " Neto"] = partes[1]
+                                    temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "C.F.10.5%":
                                     temp_movement[partes[0] + " Neto"] = partes[1]
                                     temp_movement[partes[0] + " IVA"] = partes[2]
                                 else:
@@ -133,6 +145,12 @@ def index():
                                 elif partes[0] == "Tasa 27%":
                                     temp_movement[partes[0] + " Neto"] = partes[1]
                                     temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "C.F.21%":
+                                    temp_movement[partes[0] + " Neto"] = partes[1]
+                                    temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "C.F.10.5%":
+                                    temp_movement[partes[0] + " Neto"] = partes[1]
+                                    temp_movement[partes[0] + " IVA"] = partes[2]
                                 else:
                                     temp_movement[partes[0]] = partes[1]
                                 if (
@@ -156,12 +174,6 @@ def index():
                     df.iloc[:, 10:].apply(pd.to_numeric, errors="coerce").fillna(0)
                 )
 
-                # Columnas no numéricas (las primeras 10 columnas)
-                non_numeric_cols = df.columns[:10]
-
-                # Columnas numéricas (las restantes)
-                numeric_cols = df.columns[10:]
-
                 # Lista de columnas que deseas volver negativas
                 columnas_a_convertir = df.columns[10:]
 
@@ -172,9 +184,34 @@ def index():
                 df["Nro"] = pd.to_numeric(df["Nro"])
                 df["Concepto"] = pd.to_numeric(df["Concepto"])
 
+                # Crear una lista para almacenar las filas combinadas
+                resultado = []
+
+                # Variable para almacenar la fila combinada actual
+                fila_actual = df.iloc[0].copy()
+
+                for i in range(1, len(df)):
+                    fila_siguiente = df.iloc[i]
+
+                    # Si la clave principal se repite, combinar valores
+                    if fila_actual["Nro"] == fila_siguiente["Nro"]:
+                        for col in df.columns[10:]:  # Sumar solo las columnas numéricas
+                            fila_actual[col] += fila_siguiente[col]
+                    else:
+                        resultado.append(fila_actual)
+                        fila_actual = fila_siguiente.copy()
+
+                # Agregar la última fila combinada
+                resultado.append(fila_actual)
+
+                # Convertir lista a DataFrame
+                df_final = pd.DataFrame(resultado)
+
+                df_final["Total"] = df_final.iloc[:, 10:].sum(axis=1)
+
                 # Guardar el DataFrame en un archivo Excel
                 excel_filename = "Movimientos_MENDEZ.xlsx"
-                df.to_excel(excel_filename, index=False)
+                df_final.to_excel(excel_filename, index=False)
 
                 # Enviar el archivo Excel generado
                 return send_from_directory(
