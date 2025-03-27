@@ -260,7 +260,51 @@ def index():
 
                 # Guardar el DataFrame en un archivo Excel
                 excel_filename = "Movimientos.xlsx"
-                df_final.to_excel(excel_filename, sheet_name="Movimientos", index=False)
+
+                # Agrupar por 'Concepto' y sumar los valores numéricos
+                df_grouped = df_final.groupby("Concepto", as_index=False).sum(
+                    numeric_only=True
+                )
+
+                # Filtrar columnas, eliminando las que contienen ciertas palabras
+                df_grouped = df_grouped.loc[
+                    :,
+                    ~df_grouped.columns.str.contains(
+                        "IVA|RET|PERC|Total|PV|SIRCREB", case=False
+                    ),
+                ]
+
+                # Excluir la primera columna (posición 0) de la suma
+                columnas_numericas = df_grouped.select_dtypes(include="number").columns
+                columnas_a_sumar = columnas_numericas[
+                    1:
+                ]  # Todas las numéricas excepto la primera
+
+                # Sumar solo las columnas seleccionadas
+                df_grouped["Neto"] = df_grouped[columnas_a_sumar].sum(axis=1)
+
+                # Crear una fila con la etiqueta "TOTAL" sumando todas las columnas numéricas
+                fila_total = pd.DataFrame(
+                    df_grouped.iloc[:, 1:].sum()
+                ).T  # Excluye la primera columna al sumar
+
+                # Asegurar que la fila total tenga una etiqueta en "Concepto"
+                fila_total.insert(
+                    0, df_grouped.columns[0], "TOTAL"
+                )  # Agregar "TOTAL" a la primera columna
+
+                # Concatenar la fila total con el DataFrame
+                df_grouped = pd.concat([df_grouped, fila_total], ignore_index=True)
+
+                df_conceptos = df_grouped.loc[:, ["Concepto", "Neto"]].copy()
+
+                with pd.ExcelWriter(excel_filename, engine="openpyxl") as writer:
+                    df_final.to_excel(
+                        writer, sheet_name="Movimientos", index=False
+                    )  # DataFrame 1 en "Hoja1"
+                    df_conceptos.to_excel(
+                        writer, sheet_name="CONCEPTOS", index=False
+                    )  # DataFrame 2 en "Hoja2"
 
                 # Enviar el archivo Excel generado
                 return send_from_directory(
