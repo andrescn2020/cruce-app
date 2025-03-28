@@ -344,7 +344,7 @@ def index():
                                     temp_movement[partes[0] + " IVA"] = partes[2]
                                 else:
                                     temp_movement[partes[0]] = partes[1]
-                            elif partes[0] == "R.Monot.10":
+                            elif partes[0] == "R.Mont.10":
                                 if compras_o_ventas == "Ventas":
                                     temp_movement[partes[0] + " Neto"] = partes[1]
                                     temp_movement[partes[0] + " IVA"] = partes[2]
@@ -386,7 +386,7 @@ def index():
                                         temp_movement[partes[0] + " IVA"] = partes[2]
                                     else:
                                         temp_movement[partes[0]] = partes[1]
-                                elif partes[0] == "R.Monot.10":
+                                elif partes[0] == "R.Mont.10":
                                     if compras_o_ventas == "Ventas":
                                         temp_movement[partes[0] + " Neto"] = partes[1]
                                         temp_movement[partes[0] + " IVA"] = partes[2]
@@ -456,7 +456,7 @@ def index():
                                         temp_movement[partes[0] + " IVA"] = partes[2]
                                     else:
                                         temp_movement[partes[0]] = partes[1]
-                                elif partes[0] == "R.Monot.10":
+                                elif partes[0] == "R.Mont.10":
                                     if compras_o_ventas == "Ventas":
                                         temp_movement[partes[0] + " Neto"] = partes[1]
                                         temp_movement[partes[0] + " IVA"] = partes[2]
