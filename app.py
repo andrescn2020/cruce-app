@@ -243,7 +243,7 @@ def index():
 
                 try:
                     encabezado = lines[1:7]
-
+                    primer_fecha = ""
                     # Eliminar los saltos de línea y caracteres no deseados
                     encabezado_limpio = [
                         line.replace("\n", "").strip() for line in encabezado
@@ -357,43 +357,274 @@ def index():
                                 pass
                             else:
                                 if partes[0] == "Tasa 21%":
-                                    temp_movement[partes[0] + " Neto"] = partes[1]
-                                    temp_movement[partes[0] + " IVA"] = partes[2]
-                                elif partes[0] == "T.10.5%":
-                                    temp_movement[partes[0] + " Neto"] = partes[1]
-                                    temp_movement[partes[0] + " IVA"] = partes[2]
-                                elif partes[0] == "Tasa 27%":
-                                    temp_movement[partes[0] + " Neto"] = partes[1]
-                                    temp_movement[partes[0] + " IVA"] = partes[2]
-                                elif partes[0] == "C.F.21%":
-                                    temp_movement[partes[0] + " Neto"] = partes[1]
-                                    temp_movement[partes[0] + " IVA"] = partes[2]
-                                elif partes[0] == "C.F.10.5%":
-                                    temp_movement[partes[0] + " Neto"] = partes[1]
-                                    temp_movement[partes[0] + " IVA"] = partes[2]
-                                elif partes[0] == "Tasa 2.5%":
-                                    temp_movement[partes[0] + " Neto"] = partes[1]
-                                    temp_movement[partes[0] + " IVA"] = partes[2]
-                                elif partes[0] == "T.IMP 21%":
-                                    temp_movement[partes[0] + " Neto"] = partes[1]
-                                    temp_movement[partes[0] + " IVA"] = partes[2]
-                                elif partes[0] == "T.IMP 10%":
-                                    temp_movement[partes[0] + " Neto"] = partes[1]
-                                    temp_movement[partes[0] + " IVA"] = partes[2]
-                                elif partes[0] == "R.Monot21":
-                                    if compras_o_ventas == "Ventas":
+                                    if partes[0] + " Neto" in temp_movement:
+                                        neto_numero_anterior = float(
+                                            temp_movement[partes[0] + " Neto"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        iva_numero_anterior = float(
+                                            temp_movement[partes[0] + " IVA"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        neto = float(partes[1].replace(",", "."))
+                                        iva = float(partes[2].replace(",", "."))
+                                        temp_movement[partes[0] + " Neto"] = round(
+                                            neto_numero_anterior + neto, 2
+                                        )
+                                        temp_movement[partes[0] + " IVA"] = round(
+                                            iva_numero_anterior + iva, 2
+                                        )
+                                    else:
                                         temp_movement[partes[0] + " Neto"] = partes[1]
                                         temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "T.10.5%":
+                                    if partes[0] + " Neto" in temp_movement:
+                                        neto_numero_anterior = float(
+                                            temp_movement[partes[0] + " Neto"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        iva_numero_anterior = float(
+                                            temp_movement[partes[0] + " IVA"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        neto = float(partes[1].replace(",", "."))
+                                        iva = float(partes[2].replace(",", "."))
+                                        temp_movement[partes[0] + " Neto"] = round(
+                                            neto_numero_anterior + neto, 2
+                                        )
+                                        temp_movement[partes[0] + " IVA"] = round(
+                                            iva_numero_anterior + iva, 2
+                                        )
+                                    else:
+                                        temp_movement[partes[0] + " Neto"] = partes[1]
+                                        temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "Tasa 27%":
+                                    if partes[0] + " Neto" in temp_movement:
+                                        neto_numero_anterior = float(
+                                            temp_movement[partes[0] + " Neto"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        iva_numero_anterior = float(
+                                            temp_movement[partes[0] + " IVA"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        neto = float(partes[1].replace(",", "."))
+                                        iva = float(partes[2].replace(",", "."))
+                                        temp_movement[partes[0] + " Neto"] = round(
+                                            neto_numero_anterior + neto, 2
+                                        )
+                                        temp_movement[partes[0] + " IVA"] = round(
+                                            iva_numero_anterior + iva, 2
+                                        )
+                                    else:
+                                        temp_movement[partes[0] + " Neto"] = partes[1]
+                                        temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "C.F.21%":
+                                    if partes[0] + " Neto" in temp_movement:
+                                        neto_numero_anterior = float(
+                                            temp_movement[partes[0] + " Neto"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        iva_numero_anterior = float(
+                                            temp_movement[partes[0] + " IVA"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        neto = float(partes[1].replace(",", "."))
+                                        iva = float(partes[2].replace(",", "."))
+                                        temp_movement[partes[0] + " Neto"] = round(
+                                            neto_numero_anterior + neto, 2
+                                        )
+                                        temp_movement[partes[0] + " IVA"] = round(
+                                            iva_numero_anterior + iva, 2
+                                        )
+                                    else:
+                                        temp_movement[partes[0] + " Neto"] = partes[1]
+                                        temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "C.F.10.5%":
+                                    if partes[0] + " Neto" in temp_movement:
+                                        neto_numero_anterior = float(
+                                            temp_movement[partes[0] + " Neto"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        iva_numero_anterior = float(
+                                            temp_movement[partes[0] + " IVA"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        neto = float(partes[1].replace(",", "."))
+                                        iva = float(partes[2].replace(",", "."))
+                                        temp_movement[partes[0] + " Neto"] = round(
+                                            neto_numero_anterior + neto, 2
+                                        )
+                                        temp_movement[partes[0] + " IVA"] = round(
+                                            iva_numero_anterior + iva, 2
+                                        )
+                                    else:
+                                        temp_movement[partes[0] + " Neto"] = partes[1]
+                                        temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "Tasa 2.5%":
+                                    if partes[0] + " Neto" in temp_movement:
+                                        neto_numero_anterior = float(
+                                            temp_movement[partes[0] + " Neto"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        iva_numero_anterior = float(
+                                            temp_movement[partes[0] + " IVA"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        neto = float(partes[1].replace(",", "."))
+                                        iva = float(partes[2].replace(",", "."))
+                                        temp_movement[partes[0] + " Neto"] = round(
+                                            neto_numero_anterior + neto, 2
+                                        )
+                                        temp_movement[partes[0] + " IVA"] = round(
+                                            iva_numero_anterior + iva, 2
+                                        )
+                                    else:
+                                        temp_movement[partes[0] + " Neto"] = partes[1]
+                                        temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "T.IMP 21%":
+                                    if partes[0] + " Neto" in temp_movement:
+                                        neto_numero_anterior = float(
+                                            temp_movement[partes[0] + " Neto"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        iva_numero_anterior = float(
+                                            temp_movement[partes[0] + " IVA"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        neto = float(partes[1].replace(",", "."))
+                                        iva = float(partes[2].replace(",", "."))
+                                        temp_movement[partes[0] + " Neto"] = round(
+                                            neto_numero_anterior + neto, 2
+                                        )
+                                        temp_movement[partes[0] + " IVA"] = round(
+                                            iva_numero_anterior + iva, 2
+                                        )
+                                    else:
+                                        temp_movement[partes[0] + " Neto"] = partes[1]
+                                        temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "T.IMP 10%":
+                                    if partes[0] + " Neto" in temp_movement:
+                                        neto_numero_anterior = float(
+                                            temp_movement[partes[0] + " Neto"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        iva_numero_anterior = float(
+                                            temp_movement[partes[0] + " IVA"].replace(
+                                                ",", "."
+                                            )
+                                        )
+                                        neto = float(partes[1].replace(",", "."))
+                                        iva = float(partes[2].replace(",", "."))
+                                        temp_movement[partes[0] + " Neto"] = round(
+                                            neto_numero_anterior + neto, 2
+                                        )
+                                        temp_movement[partes[0] + " IVA"] = round(
+                                            iva_numero_anterior + iva, 2
+                                        )
+                                    else:
+                                        temp_movement[partes[0] + " Neto"] = partes[1]
+                                        temp_movement[partes[0] + " IVA"] = partes[2]
+                                elif partes[0] == "R.Monot21":
+                                    if compras_o_ventas == "Ventas":
+                                        if partes[0] + " Neto" in temp_movement:
+                                            neto_numero_anterior = float(
+                                                temp_movement[
+                                                    partes[0] + " Neto"
+                                                ].replace(",", ".")
+                                            )
+                                            iva_numero_anterior = float(
+                                                temp_movement[
+                                                    partes[0] + " IVA"
+                                                ].replace(",", ".")
+                                            )
+                                            neto = float(partes[1].replace(",", "."))
+                                            iva = float(partes[2].replace(",", "."))
+                                            temp_movement[partes[0] + " Neto"] = round(
+                                                neto_numero_anterior + neto, 2
+                                            )
+                                            temp_movement[partes[0] + " IVA"] = round(
+                                                iva_numero_anterior + iva, 2
+                                            )
+                                        else:
+                                            temp_movement[partes[0] + " Neto"] = partes[
+                                                1
+                                            ]
+                                            temp_movement[partes[0] + " IVA"] = partes[
+                                                2
+                                            ]
                                     else:
                                         temp_movement[partes[0]] = partes[1]
                                 elif partes[0] == "R.Mont.10":
                                     if compras_o_ventas == "Ventas":
-                                        temp_movement[partes[0] + " Neto"] = partes[1]
-                                        temp_movement[partes[0] + " IVA"] = partes[2]
+                                        if partes[0] + " Neto" in temp_movement:
+                                            neto_numero_anterior = float(
+                                                temp_movement[
+                                                    partes[0] + " Neto"
+                                                ].replace(",", ".")
+                                            )
+                                            iva_numero_anterior = float(
+                                                temp_movement[
+                                                    partes[0] + " IVA"
+                                                ].replace(",", ".")
+                                            )
+                                            neto = float(partes[1].replace(",", "."))
+                                            iva = float(partes[2].replace(",", "."))
+                                            temp_movement[partes[0] + " Neto"] = round(
+                                                neto_numero_anterior + neto, 2
+                                            )
+                                            temp_movement[partes[0] + " IVA"] = round(
+                                                iva_numero_anterior + iva, 2
+                                            )
+                                        else:
+                                            temp_movement[partes[0] + " Neto"] = partes[
+                                                1
+                                            ]
+                                            temp_movement[partes[0] + " IVA"] = partes[
+                                                2
+                                            ]
                                     else:
                                         temp_movement[partes[0]] = partes[1]
                                 else:
-                                    temp_movement[partes[0]] = partes[1]
+                                    if partes[0] in temp_movement:
+                                        if type(temp_movement[partes[0]]) == float:
+                                            numero_actual = float(
+                                                partes[1].replace(",", ".")
+                                            )
+                                            temp_movement[partes[0]] = round(
+                                                temp_movement[partes[0]]
+                                                + numero_actual,
+                                                2,
+                                            )
+                                        else:
+                                            numero_anterior = float(
+                                                temp_movement[partes[0]].replace(
+                                                    ",", "."
+                                                )
+                                            )
+                                            numero_actual = float(
+                                                partes[1].replace(",", ".")
+                                            )
+                                            temp_movement[partes[0]] = round(
+                                                numero_anterior + numero_actual, 2
+                                            )
+                                    else:
+                                        temp_movement[partes[0]] = partes[1]
                             if (
                                 index == len(doble_cleaned_lines) - 1
                             ):  # Verificar si es el último elemento
@@ -408,11 +639,11 @@ def index():
                             else:
                                 concepto = cleaned_line[64:67].strip()
                                 descripcion = ""
-                                # print(concepto)
                                 for diccionario in conceptos:
                                     if concepto in diccionario:
                                         descripcion = diccionario[concepto]
                                         break
+
                                 temp_movement = {
                                     "Fecha": cleaned_line[0:2],
                                     "Comprobante": cleaned_line[3:5],
@@ -426,6 +657,13 @@ def index():
                                     "Descripcion": descripcion.upper(),
                                     "Jurisdiccion": cleaned_line[68:69],
                                 }
+                                if len(partes) == 3:
+                                    primer_monto = partes[1].split(" ")
+                                    primer_monto = list(filter(None, primer_monto))
+                                    segundo_monto = partes[1].split(" ")
+                                    segundo_monto = list(filter(None, segundo_monto))
+                                    partes = [partes[0]] + primer_monto + segundo_monto
+
                                 if partes[0] == "Tasa 21%":
                                     temp_movement[partes[0] + " Neto"] = partes[1]
                                     temp_movement[partes[0] + " IVA"] = partes[2]
@@ -551,7 +789,7 @@ def index():
                 df_grouped = df_grouped.loc[
                     :,
                     ~df_grouped.columns.str.contains(
-                        "IVA|RET|PERC|Total|PV|SIRCREB", case=False
+                        "IVA|RET|PERC|Total|PV|SIRCREB|RG", case=False
                     ),
                 ]
 
@@ -597,15 +835,64 @@ def index():
 
                 df_final = df_final.drop("Descripcion", axis=1)
 
-                with pd.ExcelWriter(excel_filename, engine="openpyxl") as writer:
-                    df_final.to_excel(
-                        writer, sheet_name="Movimientos", index=False
-                    )  # DataFrame 1 en "Hoja1"
-                    df_merged.to_excel(
-                        writer, sheet_name="CONCEPTOS", index=False
-                    )  # DataFrame 2 en "Hoja2"
+                # Eliminar columnas que contienen "Unnamed"
+                df_final = df_final.loc[:, ~(df_final.columns == "")]
+
+                # Filtrar columnas, eliminando las que contienen ciertas palabras
+                df_netos = df_final.loc[
+                    :,
+                    ~df_final.columns.str.contains(
+                        "IVA|RET|PERC|Total|PV|SIRCREB|RG", case=False
+                    ),
+                ]
+
+                # Excluir la primera columna (posición 0) de la suma
+                columnas_numericas_a_sumar = df_netos.select_dtypes(
+                    include="number"
+                ).columns
+                columnas_a_sumar = columnas_numericas_a_sumar[9:]
+
+                df_netos["Total NETO"] = df_netos.iloc[:, 9:].sum(axis=1)
+
+                # Crear una fila con la etiqueta "TOTAL"
+                fila_total = pd.DataFrame(df_netos.iloc[:, 9:].sum()).T
+
+                df_encabezado.columns = [""] * len(df_encabezado.columns)
+
+                with pd.ExcelWriter(excel_filename, engine="xlsxwriter") as writer:
                     df_encabezado.to_excel(
-                        writer, sheet_name="Encabezado", index=False, header=False
+                        writer, sheet_name="Netos", startcol=4, index=False
+                    )
+                    df_netos.to_excel(
+                        writer, sheet_name="Netos", startrow=8, index=False
+                    )
+
+                    df_encabezado.to_excel(
+                        writer, sheet_name="Movimientos", startcol=5, index=False
+                    )
+                    df_final.to_excel(
+                        writer, sheet_name="Movimientos", startrow=8, index=False
+                    )
+
+                    df_merged.to_excel(writer, sheet_name="CONCEPTOS", index=False)
+
+                    # Obtener el libro y las hojas de trabajo
+                    workbook = writer.book
+                    sheet_netos = writer.sheets["Netos"]
+                    sheet_movimientos = writer.sheets["Movimientos"]
+                    sheet_conceptos = writer.sheets["CONCEPTOS"]
+
+                    # Definir formato de número con dos decimales
+                    formato_decimal = workbook.add_format({"num_format": "0.00"})
+
+                    sheet_netos.set_column(
+                        9, df_netos.shape[1] - 1, None, formato_decimal
+                    )
+                    sheet_movimientos.set_column(
+                        10, df_final.shape[1] - 1, None, formato_decimal
+                    )
+                    sheet_conceptos.set_column(
+                        2, df_merged.shape[1] - 1, None, formato_decimal
                     )
 
                 # Enviar el archivo Excel generado
