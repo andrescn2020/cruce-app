@@ -842,7 +842,7 @@ def index():
                 df_netos = df_final.loc[
                     :,
                     ~df_final.columns.str.contains(
-                        "IVA|RET|PERC|Total|PV|SIRCREB|RG", case=False
+                        "IVA|RET|PERC|Total|SIRCREB|RG", case=False
                     ),
                 ]
 
@@ -850,18 +850,18 @@ def index():
                 columnas_numericas_a_sumar = df_netos.select_dtypes(
                     include="number"
                 ).columns
-                columnas_a_sumar = columnas_numericas_a_sumar[9:]
+                columnas_a_sumar = columnas_numericas_a_sumar[10:]
 
-                df_netos["Total NETO"] = df_netos.iloc[:, 9:].sum(axis=1)
+                df_netos["Total NETO"] = df_netos.iloc[:, 10:].sum(axis=1)
 
                 # Crear una fila con la etiqueta "TOTAL"
-                fila_total = pd.DataFrame(df_netos.iloc[:, 9:].sum()).T
+                fila_total = pd.DataFrame(df_netos.iloc[:, 10:].sum()).T
 
                 df_encabezado.columns = [""] * len(df_encabezado.columns)
 
                 with pd.ExcelWriter(excel_filename, engine="xlsxwriter") as writer:
                     df_encabezado.to_excel(
-                        writer, sheet_name="Netos", startcol=4, index=False
+                        writer, sheet_name="Netos", startcol=5, index=False
                     )
                     df_netos.to_excel(
                         writer, sheet_name="Netos", startrow=8, index=False
