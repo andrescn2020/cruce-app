@@ -2,6 +2,10 @@ from flask import Flask, render_template, request, send_from_directory
 import os
 import re
 import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font
+from openpyxl.styles import PatternFill
 
 app = Flask(__name__)
 
@@ -34,6 +38,7 @@ def index():
                 eliminar_desde_totales = False
                 temp_movement = {}
                 compras_o_ventas = ""
+                jurisdicciones = set()
 
                 # CONCEPTOS
 
@@ -294,6 +299,13 @@ def index():
                         cleaned_line = re.sub(
                             r"[\x00-\x1F\x7F]", "", cleaned_line
                         )  # Eliminación de caracteres de control ASCII
+                        if "Ñ" in cleaned_line:
+                            if len(cleaned_line) == 135:
+                                pass
+                            else:
+                                cleaned_line = (
+                                    cleaned_line[:44] + " " + cleaned_line[44:]
+                                )
                         cleaned_lines.append(
                             cleaned_line
                         )  # Guardar la línea limpia sin espacios extra
@@ -643,7 +655,7 @@ def index():
                                     if concepto in diccionario:
                                         descripcion = diccionario[concepto]
                                         break
-
+                                jurisdicciones.add(cleaned_line[68:69])
                                 temp_movement = {
                                     "Fecha": cleaned_line[0:2],
                                     "Comprobante": cleaned_line[3:5],
@@ -859,12 +871,54 @@ def index():
 
                 df_encabezado.columns = [""] * len(df_encabezado.columns)
 
-                with pd.ExcelWriter(excel_filename, engine="xlsxwriter") as writer:
+                # Crear una copia
+                df_total_por_jurisdiccion_y_concepto = df_merged.drop(
+                    "Neto", axis=1
+                ).copy()
+
+                # Obtener los rangos de las columnas a formular
+                inicio = 10
+                fin = inicio + len(df_netos) - 2
+
+                ultima_columna_index = df_netos.columns.get_loc(
+                    "Total NETO"
+                )  # Índice numérico de la columna
+                ultima_columna_letra = chr(
+                    65 + ultima_columna_index
+                )  # Convertir a letra (solo para A-Z)
+
+                rango_concepto = f"$I${inicio}:$I${fin}"
+                rango_jurisdiccion = f"$J${inicio}:$J${fin}"
+                rango_total_neto = (
+                    f"${ultima_columna_letra}${inicio}:${ultima_columna_letra}${fin}"
+                )
+
+                for jurisdiccion in jurisdicciones:
+                    df_total_por_jurisdiccion_y_concepto[jurisdiccion] = (
+                        0  # Puedes cambiar este valor por otro si es necesario
+                    )
+
+                jurisdicciones = sorted(jurisdicciones)
+
+                # Crear un relleno sólido (color verde en este caso)
+                relleno_verde = PatternFill(
+                    start_color="5CE65C", end_color="5CE65C", fill_type="solid"
+                )
+
+                with pd.ExcelWriter(excel_filename, engine="openpyxl") as writer:
                     df_encabezado.to_excel(
                         writer, sheet_name="Netos", startcol=5, index=False
                     )
                     df_netos.to_excel(
                         writer, sheet_name="Netos", startrow=8, index=False
+                    )
+
+                    df_total_por_jurisdiccion_y_concepto.to_excel(
+                        writer,
+                        sheet_name="Netos",
+                        startrow=fin + 4,
+                        startcol=6,
+                        index=False,
                     )
 
                     df_encabezado.to_excel(
@@ -874,26 +928,75 @@ def index():
                         writer, sheet_name="Movimientos", startrow=8, index=False
                     )
 
-                    df_merged.to_excel(writer, sheet_name="CONCEPTOS", index=False)
-
-                    # Obtener el libro y las hojas de trabajo
-                    workbook = writer.book
-                    sheet_netos = writer.sheets["Netos"]
-                    sheet_movimientos = writer.sheets["Movimientos"]
-                    sheet_conceptos = writer.sheets["CONCEPTOS"]
-
-                    # Definir formato de número con dos decimales
-                    formato_decimal = workbook.add_format({"num_format": "0.00"})
-
-                    sheet_netos.set_column(
-                        9, df_netos.shape[1] - 1, None, formato_decimal
+                    df_merged.to_excel(
+                        writer,
+                        sheet_name="Netos",
+                        startrow=fin + 4,
+                        startcol=2,
+                        index=False,
                     )
-                    sheet_movimientos.set_column(
-                        10, df_final.shape[1] - 1, None, formato_decimal
+
+                    df_merged.to_excel(
+                        writer,
+                        sheet_name="CONCEPTOS",
+                        index=False,
                     )
-                    sheet_conceptos.set_column(
-                        2, df_merged.shape[1] - 1, None, formato_decimal
-                    )
+
+                # 🔹 **Abrir el archivo con `openpyxl` para insertar las fórmulas**
+
+                wb = load_workbook(excel_filename)
+                ws = wb["Netos"]
+
+                # 🔹 **Insertar las fórmulas directamente en la hoja de cálculo**
+
+                contador = 0
+                contador_concepto = 0
+
+                # CREACION DE CELDAS CON FORMULA EN TABLA TOTALES POR CONCEPTOS
+
+                for index, row in df_merged.iterrows():
+                    fila_excel_concepto = fin + 6
+                    fila_temporal = contador_concepto + fila_excel_concepto
+
+                    formula = f"=SUMAR.SI({rango_concepto},$G{fila_temporal},{rango_total_neto})"
+                    col_letter = get_column_letter(5)
+                    ws[f"{col_letter}{fila_temporal}"] = formula
+
+                    contador_concepto += 1
+
+                # CREACION DE CELDAS CON FORMULA EN TABLA 3
+
+                for index, row in df_total_por_jurisdiccion_y_concepto.iterrows():
+                    fila_excel_concepto = fin + 6
+                    fila_temporal = contador + fila_excel_concepto
+                    fila_excel_jurisdiccion = fin + 5
+                    for col_index, jurisdiccion in enumerate(
+                        jurisdicciones, start=9
+                    ):  # "D" es la 4ta columna
+                        col_letter = get_column_letter(
+                            col_index
+                        )  # Convertir índice numérico a letra
+                        formula = f"=SUMAR.SI.CONJUNTO({rango_total_neto},{rango_concepto},$G{fila_temporal},{rango_jurisdiccion},{col_letter}${fila_excel_jurisdiccion})"
+                        ws[f"{col_letter}{fila_temporal}"] = formula  # Asignar fórmula
+                    contador += 1
+
+                ultima_fila = fin + 1
+                total_columnas = sum(1 for celda in ws[9] if celda.value is not None)
+                col_letter_color = get_column_letter(total_columnas)
+                # Aplicar el color a la última celda
+                celda_a_pintar = ws[f"{col_letter_color}{ultima_fila}"]
+                celda_a_pintar.fill = relleno_verde
+                celda_a_pintar.font = Font(bold=True, size=12)
+
+                col_letter = get_column_letter(8)
+                ws[f"{col_letter}{fin + 4}"] = "TOTALES POR CONCEPTO Y JURISDICCION"
+                ws[f"{col_letter}{fin + 4}"].font = Font(bold=True, size=14)
+
+                col_letter_concepto = get_column_letter(4)
+                ws[f"{col_letter_concepto}{fin + 4}"] = "TOTALES POR CONCEPTO"
+                ws[f"{col_letter_concepto}{fin + 4}"].font = Font(bold=True, size=14)
+
+                wb.save(excel_filename)
 
                 # Enviar el archivo Excel generado
                 return send_from_directory(
