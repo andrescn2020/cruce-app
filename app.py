@@ -299,13 +299,13 @@ def index():
                         cleaned_line = re.sub(
                             r"[\x00-\x1F\x7F]", "", cleaned_line
                         )  # Eliminación de caracteres de control ASCII
-                        if "Ñ" in cleaned_line:
-                            if len(cleaned_line) == 135:
-                                pass
-                            else:
-                                cleaned_line = (
-                                    cleaned_line[:44] + " " + cleaned_line[44:]
-                                )
+                        #if "Ñ" in cleaned_line:
+                        #    if len(cleaned_line) == 135:
+                        #        pass
+                        #    else:
+                        #        cleaned_line = (
+                        #            cleaned_line[:44] + " " + cleaned_line[44:]
+                        #        )
                         cleaned_lines.append(
                             cleaned_line
                         )  # Guardar la línea limpia sin espacios extra
