@@ -299,6 +299,7 @@ def index():
                         cleaned_line = re.sub(
                             r"[\x00-\x1F\x7F]", "", cleaned_line
                         )  # Eliminación de caracteres de control ASCII
+<<<<<<< HEAD
                         if "Ñ" in cleaned_line:
                             if len(cleaned_line) == 135:
                                 pass
@@ -306,6 +307,15 @@ def index():
                                 cleaned_line = (
                                     cleaned_line[:44] + " " + cleaned_line[44:]
                                 )
+=======
+                        #if "Ñ" in cleaned_line:
+                        #    if len(cleaned_line) == 135:
+                        #        pass
+                        #    else:
+                        #        cleaned_line = (
+                        #            cleaned_line[:44] + " " + cleaned_line[44:]
+                        #        )
+>>>>>>> 4d503d2e31f40d66e1ea8f2e50405cf809309268
                         cleaned_lines.append(
                             cleaned_line
                         )  # Guardar la línea limpia sin espacios extra
@@ -940,6 +950,7 @@ def index():
                         writer,
                         sheet_name="CONCEPTOS",
                         index=False,
+<<<<<<< HEAD
                     )
 
                 # 🔹 **Abrir el archivo con `openpyxl` para insertar las fórmulas**
@@ -960,6 +971,8 @@ def index():
 
                     formula = (
                         f"=SUMIF({rango_concepto},$G{fila_temporal},{rango_total_neto})"
+=======
+>>>>>>> 4d503d2e31f40d66e1ea8f2e50405cf809309268
                     )
                     col_letter = get_column_letter(5)
                     ws[f"{col_letter}{fila_temporal}"] = formula
@@ -979,6 +992,62 @@ def index():
                             col_index
                         )  # Convertir índice numérico a letra
                         formula = f"=SUMIFS({rango_total_neto},{rango_concepto},$G{fila_temporal},{rango_jurisdiccion},{col_letter}${fila_excel_jurisdiccion})"
+                        ws[f"{col_letter}{fila_temporal}"] = formula  # Asignar fórmula
+                    contador += 1
+
+                ultima_fila = fin + 1
+                total_columnas = sum(1 for celda in ws[9] if celda.value is not None)
+                col_letter_color = get_column_letter(total_columnas)
+                # Aplicar el color a la última celda
+                celda_a_pintar = ws[f"{col_letter_color}{ultima_fila}"]
+                celda_a_pintar.fill = relleno_verde
+                celda_a_pintar.font = Font(bold=True, size=12)
+
+                col_letter = get_column_letter(8)
+                ws[f"{col_letter}{fin + 4}"] = "TOTALES POR CONCEPTO Y JURISDICCION"
+                ws[f"{col_letter}{fin + 4}"].font = Font(bold=True, size=14)
+
+                col_letter_concepto = get_column_letter(4)
+                ws[f"{col_letter_concepto}{fin + 4}"] = "TOTALES POR CONCEPTO"
+                ws[f"{col_letter_concepto}{fin + 4}"].font = Font(bold=True, size=14)
+
+                wb.save(excel_filename)
+
+                # 🔹 **Abrir el archivo con `openpyxl` para insertar las fórmulas**
+
+                wb = load_workbook(excel_filename)
+                ws = wb["Netos"]
+
+                # 🔹 **Insertar las fórmulas directamente en la hoja de cálculo**
+
+                contador = 0
+                contador_concepto = 0
+
+                # CREACION DE CELDAS CON FORMULA EN TABLA TOTALES POR CONCEPTOS
+
+                for index, row in df_merged.iterrows():
+                    fila_excel_concepto = fin + 6
+                    fila_temporal = contador_concepto + fila_excel_concepto
+
+                    formula = f"=SUMAR.SI({rango_concepto},$G{fila_temporal},{rango_total_neto})"
+                    col_letter = get_column_letter(5)
+                    ws[f"{col_letter}{fila_temporal}"] = formula
+
+                    contador_concepto += 1
+
+                # CREACION DE CELDAS CON FORMULA EN TABLA 3
+
+                for index, row in df_total_por_jurisdiccion_y_concepto.iterrows():
+                    fila_excel_concepto = fin + 6
+                    fila_temporal = contador + fila_excel_concepto
+                    fila_excel_jurisdiccion = fin + 5
+                    for col_index, jurisdiccion in enumerate(
+                        jurisdicciones, start=9
+                    ):  # "D" es la 4ta columna
+                        col_letter = get_column_letter(
+                            col_index
+                        )  # Convertir índice numérico a letra
+                        formula = f"=SUMAR.SI.CONJUNTO({rango_total_neto},{rango_concepto},$G{fila_temporal},{rango_jurisdiccion},{col_letter}${fila_excel_jurisdiccion})"
                         ws[f"{col_letter}{fila_temporal}"] = formula  # Asignar fórmula
                     contador += 1
 
