@@ -954,8 +954,6 @@ def index():
 
                     formula = (
                         f"=SUMIF({rango_concepto},$G{fila_temporal},{rango_total_neto})"
-=======
->>>>>>> 4d503d2e31f40d66e1ea8f2e50405cf809309268
                     )
                     col_letter = get_column_letter(5)
                     ws[f"{col_letter}{fila_temporal}"] = formula
