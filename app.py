@@ -958,7 +958,9 @@ def index():
                     fila_excel_concepto = fin + 6
                     fila_temporal = contador_concepto + fila_excel_concepto
 
-                    formula = f"=SUMAR.SI({rango_concepto},$G{fila_temporal},{rango_total_neto})"
+                    formula = (
+                        f"=SUMIF({rango_concepto},$G{fila_temporal},{rango_total_neto})"
+                    )
                     col_letter = get_column_letter(5)
                     ws[f"{col_letter}{fila_temporal}"] = formula
 
@@ -976,7 +978,7 @@ def index():
                         col_letter = get_column_letter(
                             col_index
                         )  # Convertir índice numérico a letra
-                        formula = f"=SUMAR.SI.CONJUNTO({rango_total_neto},{rango_concepto},$G{fila_temporal},{rango_jurisdiccion},{col_letter}${fila_excel_jurisdiccion})"
+                        formula = f"=SUMIFS({rango_total_neto},{rango_concepto},$G{fila_temporal},{rango_jurisdiccion},{col_letter}${fila_excel_jurisdiccion})"
                         ws[f"{col_letter}{fila_temporal}"] = formula  # Asignar fórmula
                     contador += 1
 
