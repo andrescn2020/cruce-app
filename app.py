@@ -299,23 +299,13 @@ def index():
                         cleaned_line = re.sub(
                             r"[\x00-\x1F\x7F]", "", cleaned_line
                         )  # Eliminación de caracteres de control ASCII
-<<<<<<< HEAD
-                        if "Ñ" in cleaned_line:
-                            if len(cleaned_line) == 135:
-                                pass
-                            else:
-                                cleaned_line = (
-                                    cleaned_line[:44] + " " + cleaned_line[44:]
-                                )
-=======
-                        #if "Ñ" in cleaned_line:
+                        # if "Ñ" in cleaned_line:
                         #    if len(cleaned_line) == 135:
                         #        pass
                         #    else:
                         #        cleaned_line = (
                         #            cleaned_line[:44] + " " + cleaned_line[44:]
                         #        )
->>>>>>> 4d503d2e31f40d66e1ea8f2e50405cf809309268
                         cleaned_lines.append(
                             cleaned_line
                         )  # Guardar la línea limpia sin espacios extra
@@ -793,7 +783,7 @@ def index():
                 fila_total = pd.DataFrame(df_final.iloc[:, 11:].sum()).T
 
                 # Agregar un identificador en la primera columna para que se distinga la fila de totalización
-                fila_total.insert(0, "Nro", "TOTAL")
+                fila_total.insert(0, "Nro", "TOTALES")
                 fila_total.insert(1, "Razon Social", "")
 
                 # Concatenar la fila total con el DataFrame
@@ -946,13 +936,6 @@ def index():
                         index=False,
                     )
 
-                    df_merged.to_excel(
-                        writer,
-                        sheet_name="CONCEPTOS",
-                        index=False,
-<<<<<<< HEAD
-                    )
-
                 # 🔹 **Abrir el archivo con `openpyxl` para insertar las fórmulas**
 
                 wb = load_workbook(excel_filename)
@@ -970,9 +953,7 @@ def index():
                     fila_temporal = contador_concepto + fila_excel_concepto
 
                     formula = (
-                        f"=SUMIF({rango_concepto},$G{fila_temporal},{rango_total_neto})"
-=======
->>>>>>> 4d503d2e31f40d66e1ea8f2e50405cf809309268
+                        f"=SUMIF({rango_concepto},$C{fila_temporal},{rango_total_neto})"
                     )
                     col_letter = get_column_letter(5)
                     ws[f"{col_letter}{fila_temporal}"] = formula
@@ -1029,7 +1010,9 @@ def index():
                     fila_excel_concepto = fin + 6
                     fila_temporal = contador_concepto + fila_excel_concepto
 
-                    formula = f"=SUMAR.SI({rango_concepto},$G{fila_temporal},{rango_total_neto})"
+                    formula = (
+                        f"=SUMIF({rango_concepto},$C{fila_temporal},{rango_total_neto})"
+                    )
                     col_letter = get_column_letter(5)
                     ws[f"{col_letter}{fila_temporal}"] = formula
 
@@ -1047,7 +1030,7 @@ def index():
                         col_letter = get_column_letter(
                             col_index
                         )  # Convertir índice numérico a letra
-                        formula = f"=SUMAR.SI.CONJUNTO({rango_total_neto},{rango_concepto},$G{fila_temporal},{rango_jurisdiccion},{col_letter}${fila_excel_jurisdiccion})"
+                        formula = f"=SUMIFS({rango_total_neto},{rango_concepto},$G{fila_temporal},{rango_jurisdiccion},{col_letter}${fila_excel_jurisdiccion})"
                         ws[f"{col_letter}{fila_temporal}"] = formula  # Asignar fórmula
                     contador += 1
 
@@ -1066,6 +1049,68 @@ def index():
                 col_letter_concepto = get_column_letter(4)
                 ws[f"{col_letter_concepto}{fin + 4}"] = "TOTALES POR CONCEPTO"
                 ws[f"{col_letter_concepto}{fin + 4}"].font = Font(bold=True, size=14)
+
+                wm = wb["Movimientos"]
+
+                # Calcular la fila donde empieza la tabla en Excel
+                inicio_fila_movimientos = 9  # Si usaste startrow=8, en Excel es fila 9
+                ultima_fila_movimientos = (
+                    inicio_fila_movimientos + df_final.shape[0] - 1
+                )  # sin la fila de totales
+                fila_totales_movimientos = ultima_fila_movimientos + 1
+
+                # Insertar fórmulas desde la columna 12 en adelante
+                for col_idx in range(
+                    11, df_final.shape[1] + 1
+                ):  # Ajustar si tus columnas cambian
+                    col_letter = get_column_letter(col_idx)
+                    formula = f"=SUM({col_letter}{inicio_fila_movimientos}:{col_letter}{ultima_fila_movimientos})"
+                    wm[f"{col_letter}{fila_totales_movimientos}"] = formula
+
+                # Calcular la fila donde empieza la tabla en Excel
+                inicio_fila_netos = 9  # Si usaste startrow=8, en Excel es fila 9
+                ultima_fila_netos = (
+                    inicio_fila_netos + df_final.shape[0] - 1
+                )  # sin la fila de totales
+                fila_totales_netos = ultima_fila_netos + 1
+
+                # Insertar fórmulas desde la columna 12 en adelante
+                for col_idx in range(
+                    11, df_netos.shape[1] + 1
+                ):  # Ajustar si tus columnas cambian
+                    col_letter = get_column_letter(col_idx)
+                    formula = f"=SUM({col_letter}{inicio_fila_netos}:{col_letter}{ultima_fila_netos})"
+                    ws[f"{col_letter}{fila_totales_netos}"] = formula
+
+                # Calcular la fila donde empieza la tabla en Excel
+                inicio_fila_sumif = fin + 6  # Si usaste startrow=8, en Excel es fila 9
+                ultima_fila_sumif = (
+                    inicio_fila_sumif + df_merged.shape[0] - 1
+                )  # sin la fila de totales
+                fila_totales_sumif = ultima_fila_sumif + 1
+
+                # Insertar fórmula solo en la columna 5 (columna E)
+                col_idx = 5
+                col_letter = get_column_letter(col_idx)
+                formula = f"=SUM({col_letter}{inicio_fila_sumif}:{col_letter}{ultima_fila_sumif})"
+
+                ws[f"{col_letter}{fila_totales_sumif}"] = formula
+
+                # Calcular la fila donde empieza la tabla en Excel
+                inicio_fila_sumifs = fin + 6  # Si usaste startrow=8, en Excel es fila 9
+                ultima_fila_sumifs = (
+                    inicio_fila_sumifs
+                    + df_total_por_jurisdiccion_y_concepto.shape[0]
+                    - 1
+                )  # sin la fila de totales
+                fila_totales_sumifs = ultima_fila_sumifs + 1
+
+                # Insertar fórmulas desde la columna 12 en adelante
+                for i in range(df_total_por_jurisdiccion_y_concepto.shape[1] - 2):
+                    col_idx = 9 + i  # Ajustar el desfase
+                    col_letter = get_column_letter(col_idx)
+                    formula = f"=SUM({col_letter}{inicio_fila_sumifs}:{col_letter}{ultima_fila_sumifs})"
+                    ws[f"{col_letter}{fila_totales_sumifs}"] = formula
 
                 wb.save(excel_filename)
 
