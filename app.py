@@ -933,7 +933,6 @@ def index():
                         writer,
                         sheet_name="CONCEPTOS",
                         index=False,
-<<<<<<< HEAD
                     )
 
                 # 🔹 **Abrir el archivo con `openpyxl` para insertar las fórmulas**
