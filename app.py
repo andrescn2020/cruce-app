@@ -299,23 +299,6 @@ def index():
                         cleaned_line = re.sub(
                             r"[\x00-\x1F\x7F]", "", cleaned_line
                         )  # Eliminación de caracteres de control ASCII
-<<<<<<< HEAD
-                        if "Ñ" in cleaned_line:
-                            if len(cleaned_line) == 135:
-                                pass
-                            else:
-                                cleaned_line = (
-                                    cleaned_line[:44] + " " + cleaned_line[44:]
-                                )
-=======
-                        #if "Ñ" in cleaned_line:
-                        #    if len(cleaned_line) == 135:
-                        #        pass
-                        #    else:
-                        #        cleaned_line = (
-                        #            cleaned_line[:44] + " " + cleaned_line[44:]
-                        #        )
->>>>>>> 4d503d2e31f40d66e1ea8f2e50405cf809309268
                         cleaned_lines.append(
                             cleaned_line
                         )  # Guardar la línea limpia sin espacios extra
@@ -1029,7 +1012,7 @@ def index():
                     fila_excel_concepto = fin + 6
                     fila_temporal = contador_concepto + fila_excel_concepto
 
-                    formula = f"=SUMAR.SI({rango_concepto},$G{fila_temporal},{rango_total_neto})"
+                    formula = f"=SUMIF({rango_concepto},$G{fila_temporal},{rango_total_neto})"
                     col_letter = get_column_letter(5)
                     ws[f"{col_letter}{fila_temporal}"] = formula
 
@@ -1047,7 +1030,7 @@ def index():
                         col_letter = get_column_letter(
                             col_index
                         )  # Convertir índice numérico a letra
-                        formula = f"=SUMAR.SI.CONJUNTO({rango_total_neto},{rango_concepto},$G{fila_temporal},{rango_jurisdiccion},{col_letter}${fila_excel_jurisdiccion})"
+                        formula = f"=SUMIFS({rango_total_neto},{rango_concepto},$G{fila_temporal},{rango_jurisdiccion},{col_letter}${fila_excel_jurisdiccion})"
                         ws[f"{col_letter}{fila_temporal}"] = formula  # Asignar fórmula
                     contador += 1
 
