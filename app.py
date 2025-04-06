@@ -1064,7 +1064,7 @@ def index():
                     11, df_final.shape[1] + 1
                 ):  # Ajustar si tus columnas cambian
                     col_letter = get_column_letter(col_idx)
-                    formula = f"=SUM({col_letter}{inicio_fila_movimientos}:{col_letter}{ultima_fila_movimientos})"
+                    formula = f"=SUM({col_letter}{inicio_fila_movimientos + 1}:{col_letter}{ultima_fila_movimientos})"
                     wm[f"{col_letter}{fila_totales_movimientos}"] = formula
 
                 # Calcular la fila donde empieza la tabla en Excel
@@ -1079,7 +1079,7 @@ def index():
                     11, df_netos.shape[1] + 1
                 ):  # Ajustar si tus columnas cambian
                     col_letter = get_column_letter(col_idx)
-                    formula = f"=SUM({col_letter}{inicio_fila_netos}:{col_letter}{ultima_fila_netos})"
+                    formula = f"=SUM({col_letter}{inicio_fila_netos + 1}:{col_letter}{ultima_fila_netos})"
                     ws[f"{col_letter}{fila_totales_netos}"] = formula
 
                 # Calcular la fila donde empieza la tabla en Excel
